@@ -1,0 +1,30 @@
+{
+  "name": "baibai-next",
+  "version": "2.0.0",
+  "description": "百百机器人NEXT",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "init-db": "node scripts/init-db.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "express-ws": "^5.0.2",
+    "ws": "^8.18.0",
+    "mongodb": "^4.17.2",
+    "axios": "^1.7.0",
+    "lodash": "^4.17.21",
+    "md5": "^2.3.0",
+    "node-html-to-image": "^4.0.0",
+    "canvas": "^2.11.2",
+    "fs-extra": "^11.2.0",
+    "node-font2base64": "^0.7.1",
+    "body-parser": "^1.20.3",
+    "path-extra": "^4.3.0",
+    "iconv-lite": "^0.6.3",
+    "node-html-parser": "^6.1.0",
+    "gm": "^1.25.0",
+    "xml2js": "^0.6.2",
+    "gifencoder": "^2.0.1"
+  }
+}

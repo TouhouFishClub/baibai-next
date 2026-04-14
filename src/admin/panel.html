@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>百百管理面板</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f6fa;color:#2d3436}
+.header{background:linear-gradient(135deg,#6c5ce7,#a29bfe);padding:20px 30px;color:#fff;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:22px;font-weight:600}
+.status-bar{display:flex;gap:8px;align-items:center;font-size:13px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#00b894;display:inline-block}
+.container{max-width:1000px;margin:24px auto;padding:0 20px}
+.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card h2{font-size:17px;margin-bottom:16px;display:flex;align-items:center;gap:8px;color:#6c5ce7}
+.card h2::before{content:'';display:block;width:4px;height:18px;background:#6c5ce7;border-radius:2px}
+.form-row{display:flex;gap:10px;margin-bottom:12px;align-items:center}
+.form-row label{min-width:80px;font-size:14px;font-weight:500;color:#636e72}
+.form-row select,.form-row input{padding:8px 12px;border:1px solid #dfe6e9;border-radius:8px;font-size:14px;outline:none;transition:border .2s}
+.form-row select:focus,.form-row input:focus{border-color:#6c5ce7}
+.form-row input{flex:1;max-width:300px}
+.btn{padding:8px 18px;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;transition:all .2s}
+.btn-primary{background:#6c5ce7;color:#fff}.btn-primary:hover{background:#5a4bd1}
+.btn-danger{background:#ff7675;color:#fff}.btn-danger:hover{background:#d63031}
+.btn-sm{padding:5px 12px;font-size:12px}
+.tag-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.tag{display:flex;align-items:center;gap:6px;background:#f0efff;color:#6c5ce7;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500}
+.tag .remove{cursor:pointer;font-size:16px;line-height:1;opacity:.6;transition:opacity .2s}.tag .remove:hover{opacity:1}
+.bot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.bot-card{background:#f0efff;border-radius:10px;padding:14px;text-align:center}
+.bot-card .bot-id{font-size:16px;font-weight:600;color:#6c5ce7}
+.bot-card .bot-time{font-size:12px;color:#b2bec3;margin-top:4px}
+.empty{color:#b2bec3;font-size:14px;padding:12px 0}
+.toast{position:fixed;top:20px;right:20px;padding:12px 24px;background:#00b894;color:#fff;border-radius:10px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>百百管理面板</h1>
+  <div class="status-bar"><span class="status-dot" id="statusDot"></span><span id="statusText">连接中...</span></div>
+</div>
+<div class="container">
+  <div class="card">
+    <h2>在线机器人</h2>
+    <div class="bot-grid" id="botGrid"><div class="empty">加载中...</div></div>
+  </div>
+  <div class="card">
+    <h2>群组访问控制</h2>
+    <div class="form-row">
+      <label>模式</label>
+      <select id="groupMode">
+        <option value="allowAll">允许所有群(排除黑名单)</option>
+        <option value="denyAll">拒绝所有群(仅白名单)</option>
+      </select>
+      <button class="btn btn-primary" onclick="saveGroupMode()">保存</button>
+    </div>
+    <div class="form-row">
+      <label>群号</label>
+      <input type="text" id="groupIdInput" placeholder="输入群号">
+      <button class="btn btn-primary" onclick="addGroup()">添加</button>
+    </div>
+    <div class="tag-list" id="groupList"></div>
+  </div>
+  <div class="card">
+    <h2>用户封禁</h2>
+    <div class="form-row">
+      <label>QQ号</label>
+      <input type="text" id="userIdInput" placeholder="输入QQ号">
+      <button class="btn btn-danger" onclick="blockUser()">封禁</button>
+    </div>
+    <div class="tag-list" id="blockedList"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const cred = btoa(prompt('请输入管理凭证 (格式: 用户名:密码)', 'admin:admin123'))
+const headers = {'Authorization':'Basic '+cred,'Content-Type':'application/json'}
+const api = (url, opts)=>fetch(url,{headers,...opts}).then(r=>r.json())
+function toast(msg,ok=true){const t=document.getElementById('toast');t.textContent=msg;t.style.background=ok?'#00b894':'#d63031';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+async function loadStatus(){try{const d=await api('/admin/api/status');const g=document.getElementById('botGrid');document.getElementById('statusDot').style.background='#00b894';document.getElementById('statusText').textContent=`运行 ${Math.floor(d.uptime/60)}分钟`;if(d.bots.length){g.innerHTML=d.bots.map(b=>`<div class="bot-card"><div class="bot-id">${b.id}</div><div class="bot-time">selfId: ${b.selfId}</div><div class="bot-time">连接于: ${new Date(b.connectedAt).toLocaleString()}</div></div>`).join('')}else{g.innerHTML='<div class="empty">暂无在线机器人</div>'}}catch(e){document.getElementById('statusDot').style.background='#d63031';document.getElementById('statusText').textContent='连接失败'}}
+async function loadRules(){try{const d=await api('/admin/api/rules');document.getElementById('groupMode').value=d.groupMode||'allowAll';const gl=document.getElementById('groupList');gl.innerHTML=d.groupList.length?d.groupList.map(g=>`<span class="tag">${g}<span class="remove" onclick="removeGroup(${g})">&times;</span></span>`).join(''):'<div class="empty">列表为空</div>';const bl=document.getElementById('blockedList');bl.innerHTML=d.blockedUsers.length?d.blockedUsers.map(u=>`<span class="tag">${u}<span class="remove" onclick="unblockUser(${u})">&times;</span></span>`).join(''):'<div class="empty">暂无封禁用户</div>'}catch(e){toast('加载失败',false)}}
+async function saveGroupMode(){const m=document.getElementById('groupMode').value;const d=await api('/admin/api/group-mode',{method:'POST',body:JSON.stringify({mode:m})});toast(d.ok?'保存成功':'保存失败',d.ok);loadRules()}
+async function addGroup(){const v=document.getElementById('groupIdInput').value.trim();if(!v)return;const d=await api('/admin/api/group-add',{method:'POST',body:JSON.stringify({groupId:parseInt(v)})});toast(d.ok?'添加成功':'添加失败',d.ok);document.getElementById('groupIdInput').value='';loadRules()}
+async function removeGroup(id){const d=await api('/admin/api/group-remove',{method:'POST',body:JSON.stringify({groupId:id})});toast(d.ok?'移除成功':'移除失败',d.ok);loadRules()}
+async function blockUser(){const v=document.getElementById('userIdInput').value.trim();if(!v)return;const d=await api('/admin/api/user-block',{method:'POST',body:JSON.stringify({userId:parseInt(v)})});toast(d.ok?'封禁成功':'封禁失败',d.ok);document.getElementById('userIdInput').value='';loadRules()}
+async function unblockUser(id){const d=await api('/admin/api/user-unblock',{method:'POST',body:JSON.stringify({userId:id})});toast(d.ok?'解封成功':'解封失败',d.ok);loadRules()}
+loadStatus();loadRules();setInterval(loadStatus,30000)
+</script>
+</body>
+</html>
