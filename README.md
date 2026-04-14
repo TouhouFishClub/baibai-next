@@ -58,7 +58,7 @@ npm install
 
 ```bash
 cp config.example.js config.js
-cp secret.example.json secret.json
+cp .secret.example.json .secret.json
 ```
 
 **config.js** 主要配置项：
