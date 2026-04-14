@@ -5,7 +5,7 @@ const { getAllConnections } = require('../bot/BotManager')
 
 let adminAuth = { username: 'admin', password: 'admin123' }
 try {
-  const secret = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'secret.json'), 'utf8'))
+  const secret = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.secret.json'), 'utf8'))
   if (secret.adminUsername && secret.adminPassword) {
     adminAuth = { username: secret.adminUsername, password: secret.adminPassword }
   }
